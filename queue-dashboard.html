@@ -384,6 +384,31 @@
     padding-top: 6px;
   }
 
+  .item-tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  .tag-personal   { background: rgba(167,139,250,0.12); color: #A78BFA; }
+  .tag-commercial { background: rgba(255,107,43,0.12);  color: var(--printer); }
+  .tag-unknown    { background: rgba(107,114,128,0.1);  color: var(--muted); }
+
+  .tag-neall   { background: rgba(0,212,255,0.08); color: var(--laser); }
+  .tag-faith   { background: rgba(168,255,62,0.08); color: var(--plotter); }
+  .tag-agent   { background: rgba(212,168,83,0.08); color: #D4A853; }
+
   /* in-progress progress bar */
   .progress-bar {
     margin-top: 8px;
@@ -754,151 +779,59 @@
 </footer>
 
 <script>
-// ── SAMPLE DATA (replace with live queue.json fetch in production) ──
-const queueData = {
+// ── LIVE DATA — fetched from queue.json in this repo ──
+const DATA_URL = 'https://raw.githubusercontent.com/dubbleoco/queue-dashboard/main/queue.json';
+
+const FALLBACK = {
   updated: new Date().toISOString(),
-  items: [
-    {
-      id: "q001",
-      name: "Bambu Spool Wall Mount",
-      machine: "3dp",
-      status: "in_progress",
-      source: "MakerWorld",
-      sourceUrl: "https://makerworld.com",
-      rating: "4.9",
-      downloads: "8.2k",
-      addedDaysAgo: 1,
-      note: "Currently printing. 6hr 40min remaining."
-    },
-    {
-      id: "q002",
-      name: "Cable Management Clip — Desk",
-      machine: "3dp",
-      status: "queued",
-      source: "Printables",
-      sourceUrl: "https://printables.com",
-      rating: "4.6",
-      downloads: "3.1k",
-      addedDaysAgo: 2
-    },
-    {
-      id: "q003",
-      name: "Raspberry Pi 4 Enclosure",
-      machine: "3dp",
-      status: "researched",
-      source: "MakerWorld",
-      sourceUrl: "https://makerworld.com",
-      rating: "4.8",
-      downloads: "12k",
-      addedDaysAgo: 3,
-      note: "Remix with better ventilation available."
-    },
-    {
-      id: "q004",
-      name: "Articulating Phone Arm",
-      machine: "3dp",
-      status: "idea",
-      addedDaysAgo: 1
-    },
-    {
-      id: "q005",
-      name: "Leather Wallet Template Kit",
-      machine: "laser",
-      status: "in_progress",
-      source: "Cults3D",
-      sourceUrl: "https://cults3d.com",
-      rating: "4.7",
-      downloads: "890",
-      addedDaysAgo: 0,
-      note: "Cutting now. 18-piece template set."
-    },
-    {
-      id: "q006",
-      name: "Shop Door Nameplate",
-      machine: "laser",
-      status: "queued",
-      source: "Etsy",
-      sourceUrl: "https://etsy.com",
-      rating: "4.9",
-      downloads: null,
-      addedDaysAgo: 4,
-      note: "SVG file purchased. Ready to cut."
-    },
-    {
-      id: "q007",
-      name: "iKamper Logo Engrave Jig",
-      machine: "laser",
-      status: "stale",
-      addedDaysAgo: 12,
-      note: "No file found. Design from scratch recommended."
-    },
-    {
-      id: "q008",
-      name: "Topographic Map — Huron River",
-      machine: "plotter",
-      status: "researched",
-      source: "Design suggestion",
-      addedDaysAgo: 2,
-      note: "No match found. Option A: export from topographic.io as SVG. Option B: QGIS contour export. Est. 45min to prep file."
-    },
-    {
-      id: "q009",
-      name: "Pen-Plotted Business Cards",
-      machine: "plotter",
-      status: "queued",
-      source: "Original design",
-      addedDaysAgo: 5
-    },
-    {
-      id: "q010",
-      name: "Geometric Grid Pattern Print",
-      machine: "plotter",
-      status: "idea",
-      addedDaysAgo: 1
-    }
-  ],
-  researchLog: [
-    {
-      type: "found",
-      query: "Bambu spool wall mount holder",
-      result: "MakerWorld — ⭐ 4.9 · 8,241 downloads",
-      url: "https://makerworld.com",
-      time: "2h ago"
-    },
-    {
-      type: "found",
-      query: "leather wallet template SVG laser",
-      result: "Cults3D — ⭐ 4.7 · 890 downloads",
-      url: "https://cults3d.com",
-      time: "4h ago"
-    },
-    {
-      type: "design",
-      query: "topographic map Huron River SVG plotter",
-      result: "No match. Design suggestions generated → topographic.io export or QGIS",
-      url: null,
-      time: "6h ago"
-    },
-    {
-      type: "notfound",
-      query: "iKamper logo engraving jig laser cut",
-      result: "No strong match across all 6 sources. Design from scratch recommended.",
-      url: null,
-      time: "12d ago"
-    },
-    {
-      type: "found",
-      query: "Raspberry Pi 4 enclosure case",
-      result: "MakerWorld — ⭐ 4.8 · 12,047 downloads · remix available",
-      url: "https://makerworld.com",
-      time: "3d ago"
-    }
-  ],
-  doneThisWeek: [
-    { name: "Gridpawn standoff prototype", machine: "3dp", completedDaysAgo: 2 },
-    { name: "Rubber stamp test block", machine: "laser", completedDaysAgo: 4 }
-  ]
+  items: [],
+  researchLog: [],
+  doneThisWeek: []
 };
+
+function showLoadingState() {
+  ['col-printer','col-laser','col-plotter'].forEach(id => {
+    document.getElementById(id).innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-text">Loading queue...</div>
+      </div>`;
+  });
+}
+
+function showErrorState(msg) {
+  ['col-printer','col-laser','col-plotter'].forEach(id => {
+    document.getElementById(id).innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-text" style="color:var(--warning);">${msg}</div>
+      </div>`;
+  });
+}
+
+function initDashboard(data) {
+  renderStats(data);
+  renderColumn(data, '3dp',    'col-printer', 'count-printer');
+  renderColumn(data, 'laser',  'col-laser',   'count-laser');
+  renderColumn(data, 'plotter','col-plotter', 'count-plotter');
+  renderDigest(data);
+  renderResearchLog(data);
+  updateTimestamp();
+}
+
+async function loadData() {
+  showLoadingState();
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    initDashboard(data);
+  } catch (err) {
+    console.warn('Could not load queue.json:', err);
+    showErrorState('queue.json not yet pushed — run queue-sync.sh on the Mac Mini');
+    initDashboard(FALLBACK);
+  }
+}
 
 // ── RENDER ──
 function statusLabel(s) {
@@ -934,18 +867,31 @@ function renderItem(item) {
     extra += `<div class="item-note">${item.note}</div>`;
   }
 
+  // purpose tag
+  const purposeLabel = { personal: 'Personal', commercial: 'Commercial', unknown: 'Purpose?' };
+  const purposeClass = { personal: 'tag-personal', commercial: 'tag-commercial', unknown: 'tag-unknown' };
+  const purpose = item.purpose || 'unknown';
+  const purposeTag = `<span class="tag ${purposeClass[purpose]}">${purposeLabel[purpose]}</span>`;
+
+  // addedBy tag
+  const addedBy = item.addedBy || 'unknown';
+  const addedByLabel = addedBy === 'neall' ? 'Neall' : addedBy === 'faith' ? 'Faith' : addedBy.startsWith('agent:') ? addedBy.replace('agent:','') : addedBy;
+  const addedByClass = addedBy === 'neall' ? 'tag-neall' : addedBy === 'faith' ? 'tag-faith' : 'tag-agent';
+  const addedByTag = `<span class="tag ${addedByClass}">+ ${addedByLabel}</span>`;
+
   el.innerHTML = `
     <div class="item-top">
       <div class="item-name">${item.name}</div>
       <div class="status-chip">${statusLabel(item.status)}</div>
     </div>
     <div class="item-meta">${meta}</div>
+    <div class="item-tags">${purposeTag}${addedByTag}</div>
     ${extra}
   `;
   return el;
 }
 
-function renderColumn(machine, colId, countId) {
+function renderColumn(queueData, machine, colId, countId) {
   const items = queueData.items.filter(i => i.machine === machine && i.status !== 'done');
   const col = document.getElementById(colId);
   const countEl = document.getElementById(countId);
@@ -976,7 +922,7 @@ function renderColumn(machine, colId, countId) {
   sorted.forEach(item => col.appendChild(renderItem(item)));
 }
 
-function renderStats() {
+function renderStats(queueData) {
   const active = queueData.items.filter(i => i.status !== 'done');
   document.getElementById('stat-total').textContent   = active.length;
   document.getElementById('stat-printer').textContent = active.filter(i => i.machine === '3dp').length;
@@ -986,7 +932,7 @@ function renderStats() {
   document.getElementById('stat-stale').textContent   = active.filter(i => i.status === 'stale').length;
 }
 
-function renderDigest() {
+function renderDigest(queueData) {
   const inProgress = queueData.items.filter(i => i.status === 'in_progress');
   const queued     = queueData.items.filter(i => i.status === 'queued');
   const researched = queueData.items.filter(i => i.status === 'researched');
@@ -1041,7 +987,7 @@ function renderDigest() {
   document.getElementById('digest-preview').innerHTML = lines.join('\n');
 }
 
-function renderResearchLog() {
+function renderResearchLog(queueData) {
   const log = document.getElementById('research-log');
   const icons = { found: '🔎', notfound: '◯', design: '🛠️' };
 
@@ -1076,13 +1022,8 @@ function updateTimestamp() {
 }
 
 // ── INIT ──
-renderStats();
-renderColumn('3dp',    'col-printer', 'count-printer');
-renderColumn('laser',  'col-laser',   'count-laser');
-renderColumn('plotter','col-plotter', 'count-plotter');
-renderDigest();
-renderResearchLog();
-updateTimestamp();
+loadData();
+setInterval(loadData, 5 * 60 * 1000); // refresh every 5 minutes
 setInterval(updateTimestamp, 30000);
 </script>
 </body>
