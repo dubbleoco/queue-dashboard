@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUEUE — Fabrication Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0A0A0A;
+    --surface:   #111111;
+    --surface2:  #181818;
+    --surface3:  #202020;
+    --border:    #2A2A2A;
+    --border2:   #333333;
+    --text:      #E8E4DC;
+    --muted:     #7A7570;
+    --dim:       #3A3530;
+
+    --printer:   #FF6B2B;
+    --laser:     #00D4FF;
+    --plotter:   #A8FF3E;
+
+    --done:      #4ADE80;
+    --warning:   #FBBF24;
+    --idle:      #6B7280;
+
+    --printer-dim:  rgba(255,107,43,0.1);
+    --laser-dim:    rgba(0,212,255,0.1);
+    --plotter-dim:  rgba(168,255,62,0.1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 20px 28px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 50;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .wordmark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .wordmark span {
+    color: var(--printer);
+  }
+
+  .tagline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-center {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .machine-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .machine-pill.printer { color: var(--printer); border-color: var(--printer); background: var(--printer-dim); }
+  .machine-pill.laser   { color: var(--laser);   border-color: var(--laser);   background: var(--laser-dim); }
+  .machine-pill.plotter { color: var(--plotter); border-color: var(--plotter); background: var(--plotter-dim); }
+
+  .machine-pill:hover { filter: brightness(1.2); }
+
+  .machine-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .printer .machine-dot { background: var(--printer); }
+  .laser   .machine-dot { background: var(--laser); animation-delay: 0.4s; }
+  .plotter .machine-dot { background: var(--plotter); animation-delay: 0.8s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .header-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .timestamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--done);
+    letter-spacing: 0.08em;
+  }
+
+  .status-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--done);
+    box-shadow: 0 0 8px var(--done);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    padding: 16px 20px;
+    border-right: 1px solid var(--border);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .stat.printer .stat-value { color: var(--printer); }
+  .stat.laser   .stat-value { color: var(--laser); }
+  .stat.plotter .stat-value { color: var(--plotter); }
+  .stat.total   .stat-value { color: var(--text); }
+  .stat.done    .stat-value { color: var(--done); }
+  .stat.stale   .stat-value { color: var(--warning); }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── MACHINE COLUMNS ── */
+  .machine-col {
+    border-right: 1px solid var(--border);
+    min-height: 520px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .machine-col:last-child { border-right: none; }
+
+  .col-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .col-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .col-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.06em;
+  }
+
+  .col-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .col-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  .printer-col .col-name { color: var(--printer); }
+  .printer-col .col-count { background: var(--printer-dim); color: var(--printer); }
+  .laser-col   .col-name { color: var(--laser); }
+  .laser-col   .col-count { background: var(--laser-dim); color: var(--laser); }
+  .plotter-col .col-name { color: var(--plotter); }
+  .plotter-col .col-count { background: var(--plotter-dim); color: var(--plotter); }
+
+  .col-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── QUEUE ITEM ── */
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+    cursor: default;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .item:hover {
+    border-color: var(--border2);
+    transform: translateY(-1px);
+  }
+
+  .item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .item.status-in_progress::before { background: var(--done); box-shadow: 2px 0 8px var(--done); }
+  .item.status-queued::before      { background: var(--warning); }
+  .item.status-researched::before  { background: var(--laser); }
+  .item.status-idea::before        { background: var(--muted); }
+  .item.status-stale::before       { background: var(--warning); opacity: 0.5; }
+
+  .item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .item-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .status-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-in_progress .status-chip { background: rgba(74,222,128,0.15); color: var(--done); }
+  .status-queued      .status-chip { background: rgba(251,191,36,0.15);  color: var(--warning); }
+  .status-researched  .status-chip { background: var(--laser-dim);        color: var(--laser); }
+  .status-idea        .status-chip { background: rgba(107,114,128,0.15);  color: var(--idle); }
+  .status-stale       .status-chip { background: rgba(251,191,36,0.08);   color: var(--warning); }
+
+  .item-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .item-source {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .item-source a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid var(--dim);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .item-source a:hover { color: var(--text); border-color: var(--muted); }
+
+  .item-rating {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--warning);
+  }
+
+  .item-age {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    margin-left: auto;
+  }
+
+  .item-note {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-style: italic;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+
+  /* in-progress progress bar */
+  .progress-bar {
+    margin-top: 8px;
+    height: 2px;
+    background: var(--dim);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--done);
+    border-radius: 1px;
+    animation: progressAnim 2s ease-in-out infinite alternate;
+  }
+  @keyframes progressAnim {
+    from { opacity: 0.6; }
+    to   { opacity: 1; }
+  }
+
+  /* empty state */
+  .empty-state {
+    padding: 32px 20px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    opacity: 0.3;
+  }
+
+  .empty-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── BOTTOM PANELS ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--border);
+  }
+
+  .panel {
+    padding: 0;
+    border-right: 1px solid var(--border);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .panel:last-child { border-right: none; }
+
+  .panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .panel-body {
+    padding: 16px 20px;
+  }
+
+  /* ── DIGEST PREVIEW ── */
+  .digest {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--muted);
+    white-space: pre-wrap;
+  }
+
+  .digest .d-header { color: var(--text); font-weight: 600; }
+  .digest .d-printer { color: var(--printer); }
+  .digest .d-laser   { color: var(--laser); }
+  .digest .d-plotter { color: var(--plotter); }
+  .digest .d-done    { color: var(--done); }
+  .digest .d-warn    { color: var(--warning); }
+  .digest .d-dim     { color: var(--dim); }
+
+  /* ── RESEARCH LOG ── */
+  .research-entry {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .research-entry:last-child { border-bottom: none; }
+
+  .research-icon {
+    width: 28px; height: 28px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .research-icon.found    { background: var(--laser-dim); }
+  .research-icon.notfound { background: rgba(107,114,128,0.1); }
+  .research-icon.design   { background: var(--plotter-dim); }
+
+  .research-content { flex: 1; min-width: 0; }
+
+  .research-query {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .research-result {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .research-result a {
+    color: var(--laser);
+    text-decoration: none;
+  }
+  .research-result a:hover { text-decoration: underline; }
+
+  .research-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    white-space: nowrap;
+    padding-top: 3px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 12px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  .footer-right {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.06em;
+  }
+
+  .footer-item span { color: var(--muted); }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 6px 14px 4px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  /* ── STALE BANNER ── */
+  .stale-banner {
+    margin: 8px 12px 0;
+    padding: 8px 12px;
+    background: rgba(251,191,36,0.05);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .item:nth-child(1) { animation-delay: 0.05s; }
+  .item:nth-child(2) { animation-delay: 0.10s; }
+  .item:nth-child(3) { animation-delay: 0.15s; }
+  .item:nth-child(4) { animation-delay: 0.20s; }
+  .item:nth-child(5) { animation-delay: 0.25s; }
+
+  .stat:nth-child(1) { animation-delay: 0.0s; }
+  .stat:nth-child(2) { animation-delay: 0.05s; }
+  .stat:nth-child(3) { animation-delay: 0.10s; }
+  .stat:nth-child(4) { animation-delay: 0.15s; }
+  .stat:nth-child(5) { animation-delay: 0.20s; }
+  .stat:nth-child(6) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-left">
+    <div class="wordmark">QUE<span>UE</span></div>
+    <div>
+      <div class="tagline">Dubble-O Design Co.</div>
+      <div class="tagline" style="margin-top:2px;">Fabrication To-Make Queue</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="machine-pill printer">
+      <div class="machine-dot"></div>
+      3D Printer
+    </div>
+    <div class="machine-pill laser">
+      <div class="machine-dot"></div>
+      Laser
+    </div>
+    <div class="machine-pill plotter">
+      <div class="machine-dot"></div>
+      Plotter
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="timestamp" id="ts"></div>
+    <div class="status-badge">QUEUE ONLINE</div>
+  </div>
+</header>
+
+<!-- ── STATS ROW ── -->
+<div class="stats-row">
+  <div class="stat total">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Total Items</div>
+  </div>
+  <div class="stat printer">
+    <div class="stat-value" id="stat-printer">0</div>
+    <div class="stat-label">3D Print</div>
+  </div>
+  <div class="stat laser">
+    <div class="stat-value" id="stat-laser">0</div>
+    <div class="stat-label">Laser Cut</div>
+  </div>
+  <div class="stat plotter">
+    <div class="stat-value" id="stat-plotter">0</div>
+    <div class="stat-label">Plotter</div>
+  </div>
+  <div class="stat done">
+    <div class="stat-value" id="stat-done">0</div>
+    <div class="stat-label">Done This Week</div>
+  </div>
+  <div class="stat stale">
+    <div class="stat-value" id="stat-stale">0</div>
+    <div class="stat-label">Needs Decision</div>
+  </div>
+</div>
+
+<!-- ── MACHINE COLUMNS ── -->
+<div class="main">
+
+  <!-- 3D PRINTER -->
+  <div class="machine-col printer-col">
+    <div class="col-header">
+      <div class="col-title">
+        <div>
+          <div class="col-name">3D PRINTER</div>
+          <div class="col-sub">Bambu Lab</div>
+        </div>
+      </div>
+      <div class="col-count" id="count-printer">0 items</div>
+    </div>
+    <div class="col-body" id="col-printer"></div>
+  </div>
+
+  <!-- LASER -->
+  <div class="machine-col laser-col">
+    <div class="col-header">
+      <div class="col-title">
+        <div>
+          <div class="col-name">LASER</div>
+          <div class="col-sub">Thunder Nova 51</div>
+        </div>
+      </div>
+      <div class="col-count" id="count-laser">0 items</div>
+    </div>
+    <div class="col-body" id="col-laser"></div>
+  </div>
+
+  <!-- PLOTTER -->
+  <div class="machine-col plotter-col">
+    <div class="col-header">
+      <div class="col-title">
+        <div>
+          <div class="col-name">PLOTTER</div>
+          <div class="col-sub">UUNATEK A1</div>
+        </div>
+      </div>
+      <div class="col-count" id="count-plotter">0 items</div>
+    </div>
+    <div class="col-body" id="col-plotter"></div>
+  </div>
+
+</div>
+
+<!-- ── BOTTOM ROW ── -->
+<div class="bottom-row">
+
+  <!-- DIGEST PREVIEW -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Morning Digest Preview — 7:00 AM</div>
+      <div class="status-badge" style="font-size:9px;">Next: <span id="next-digest" style="margin-left:4px;"></span></div>
+    </div>
+    <div class="panel-body">
+      <div class="digest" id="digest-preview"></div>
+    </div>
+  </div>
+
+  <!-- RESEARCH LOG -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Research Log</div>
+    </div>
+    <div class="panel-body" id="research-log"></div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="footer-left">QUEUE v1.0 — OPENCLAW ECOSYSTEM — DUBBLE-O DESIGN CO.</div>
+  <div class="footer-right">
+    <div class="footer-item">Sources: <span>MakerWorld · Thangs · Printables · Cults3D · Thingiverse · Etsy</span></div>
+    <div class="footer-item">Channel: <span>iMessage → ATLAS → QUEUE</span></div>
+    <div class="footer-item">Digest: <span>7:00 AM daily</span></div>
+  </div>
+</footer>
+
+<script>
+// ── SAMPLE DATA (replace with live queue.json fetch in production) ──
+const queueData = {
+  updated: new Date().toISOString(),
+  items: [
+    {
+      id: "q001",
+      name: "Bambu Spool Wall Mount",
+      machine: "3dp",
+      status: "in_progress",
+      source: "MakerWorld",
+      sourceUrl: "https://makerworld.com",
+      rating: "4.9",
+      downloads: "8.2k",
+      addedDaysAgo: 1,
+      note: "Currently printing. 6hr 40min remaining."
+    },
+    {
+      id: "q002",
+      name: "Cable Management Clip — Desk",
+      machine: "3dp",
+      status: "queued",
+      source: "Printables",
+      sourceUrl: "https://printables.com",
+      rating: "4.6",
+      downloads: "3.1k",
+      addedDaysAgo: 2
+    },
+    {
+      id: "q003",
+      name: "Raspberry Pi 4 Enclosure",
+      machine: "3dp",
+      status: "researched",
+      source: "MakerWorld",
+      sourceUrl: "https://makerworld.com",
+      rating: "4.8",
+      downloads: "12k",
+      addedDaysAgo: 3,
+      note: "Remix with better ventilation available."
+    },
+    {
+      id: "q004",
+      name: "Articulating Phone Arm",
+      machine: "3dp",
+      status: "idea",
+      addedDaysAgo: 1
+    },
+    {
+      id: "q005",
+      name: "Leather Wallet Template Kit",
+      machine: "laser",
+      status: "in_progress",
+      source: "Cults3D",
+      sourceUrl: "https://cults3d.com",
+      rating: "4.7",
+      downloads: "890",
+      addedDaysAgo: 0,
+      note: "Cutting now. 18-piece template set."
+    },
+    {
+      id: "q006",
+      name: "Shop Door Nameplate",
+      machine: "laser",
+      status: "queued",
+      source: "Etsy",
+      sourceUrl: "https://etsy.com",
+      rating: "4.9",
+      downloads: null,
+      addedDaysAgo: 4,
+      note: "SVG file purchased. Ready to cut."
+    },
+    {
+      id: "q007",
+      name: "iKamper Logo Engrave Jig",
+      machine: "laser",
+      status: "stale",
+      addedDaysAgo: 12,
+      note: "No file found. Design from scratch recommended."
+    },
+    {
+      id: "q008",
+      name: "Topographic Map — Huron River",
+      machine: "plotter",
+      status: "researched",
+      source: "Design suggestion",
+      addedDaysAgo: 2,
+      note: "No match found. Option A: export from topographic.io as SVG. Option B: QGIS contour export. Est. 45min to prep file."
+    },
+    {
+      id: "q009",
+      name: "Pen-Plotted Business Cards",
+      machine: "plotter",
+      status: "queued",
+      source: "Original design",
+      addedDaysAgo: 5
+    },
+    {
+      id: "q010",
+      name: "Geometric Grid Pattern Print",
+      machine: "plotter",
+      status: "idea",
+      addedDaysAgo: 1
+    }
+  ],
+  researchLog: [
+    {
+      type: "found",
+      query: "Bambu spool wall mount holder",
+      result: "MakerWorld — ⭐ 4.9 · 8,241 downloads",
+      url: "https://makerworld.com",
+      time: "2h ago"
+    },
+    {
+      type: "found",
+      query: "leather wallet template SVG laser",
+      result: "Cults3D — ⭐ 4.7 · 890 downloads",
+      url: "https://cults3d.com",
+      time: "4h ago"
+    },
+    {
+      type: "design",
+      query: "topographic map Huron River SVG plotter",
+      result: "No match. Design suggestions generated → topographic.io export or QGIS",
+      url: null,
+      time: "6h ago"
+    },
+    {
+      type: "notfound",
+      query: "iKamper logo engraving jig laser cut",
+      result: "No strong match across all 6 sources. Design from scratch recommended.",
+      url: null,
+      time: "12d ago"
+    },
+    {
+      type: "found",
+      query: "Raspberry Pi 4 enclosure case",
+      result: "MakerWorld — ⭐ 4.8 · 12,047 downloads · remix available",
+      url: "https://makerworld.com",
+      time: "3d ago"
+    }
+  ],
+  doneThisWeek: [
+    { name: "Gridpawn standoff prototype", machine: "3dp", completedDaysAgo: 2 },
+    { name: "Rubber stamp test block", machine: "laser", completedDaysAgo: 4 }
+  ]
+};
+
+// ── RENDER ──
+function statusLabel(s) {
+  const map = {
+    in_progress: "In Progress",
+    queued: "Queued",
+    researched: "Researched",
+    idea: "Idea",
+    stale: "Stale"
+  };
+  return map[s] || s;
+}
+
+function renderItem(item) {
+  const el = document.createElement('div');
+  el.className = `item status-${item.status}`;
+
+  let meta = '';
+  if (item.source) {
+    meta += `<span class="item-source">${item.sourceUrl ? `<a href="${item.sourceUrl}" target="_blank">${item.source}</a>` : item.source}</span>`;
+  }
+  if (item.rating) {
+    meta += `<span class="item-rating">⭐ ${item.rating}${item.downloads ? ` · ${item.downloads} dl` : ''}</span>`;
+  }
+  const age = item.addedDaysAgo === 0 ? 'today' : item.addedDaysAgo === 1 ? '1d ago' : `${item.addedDaysAgo}d ago`;
+  meta += `<span class="item-age">${age}</span>`;
+
+  let extra = '';
+  if (item.status === 'in_progress') {
+    extra = `<div class="progress-bar"><div class="progress-fill" style="width:${30 + Math.random()*50}%"></div></div>`;
+  }
+  if (item.note) {
+    extra += `<div class="item-note">${item.note}</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="item-top">
+      <div class="item-name">${item.name}</div>
+      <div class="status-chip">${statusLabel(item.status)}</div>
+    </div>
+    <div class="item-meta">${meta}</div>
+    ${extra}
+  `;
+  return el;
+}
+
+function renderColumn(machine, colId, countId) {
+  const items = queueData.items.filter(i => i.machine === machine && i.status !== 'done');
+  const col = document.getElementById(colId);
+  const countEl = document.getElementById(countId);
+
+  countEl.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+  if (items.length === 0) {
+    col.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${machine === '3dp' ? '🖨️' : machine === 'laser' ? '✂️' : '✒️'}</div>
+        <div class="empty-text">Queue is clear</div>
+      </div>`;
+    return;
+  }
+
+  // stale banner
+  const stale = items.filter(i => i.status === 'stale');
+  if (stale.length) {
+    const banner = document.createElement('div');
+    banner.className = 'stale-banner';
+    banner.textContent = `⚠ ${stale.length} item${stale.length > 1 ? 's' : ''} need a decision`;
+    col.appendChild(banner);
+  }
+
+  // order: in_progress → queued → researched → idea → stale
+  const order = ['in_progress','queued','researched','idea','stale'];
+  const sorted = [...items].sort((a,b) => order.indexOf(a.status) - order.indexOf(b.status));
+  sorted.forEach(item => col.appendChild(renderItem(item)));
+}
+
+function renderStats() {
+  const active = queueData.items.filter(i => i.status !== 'done');
+  document.getElementById('stat-total').textContent   = active.length;
+  document.getElementById('stat-printer').textContent = active.filter(i => i.machine === '3dp').length;
+  document.getElementById('stat-laser').textContent   = active.filter(i => i.machine === 'laser').length;
+  document.getElementById('stat-plotter').textContent = active.filter(i => i.machine === 'plotter').length;
+  document.getElementById('stat-done').textContent    = queueData.doneThisWeek.length;
+  document.getElementById('stat-stale').textContent   = active.filter(i => i.status === 'stale').length;
+}
+
+function renderDigest() {
+  const inProgress = queueData.items.filter(i => i.status === 'in_progress');
+  const queued     = queueData.items.filter(i => i.status === 'queued');
+  const researched = queueData.items.filter(i => i.status === 'researched');
+  const ideas      = queueData.items.filter(i => i.status === 'idea');
+  const stale      = queueData.items.filter(i => i.status === 'stale');
+  const done       = queueData.doneThisWeek;
+
+  const machineTag = m => m === '3dp' ? '🖨️' : m === 'laser' ? '✂️' : '✒️';
+
+  let lines = [];
+  lines.push(`<span class="d-header">🖨️ QUEUE — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</span>\n`);
+
+  if (inProgress.length) {
+    lines.push(`<span class="d-header">IN PROGRESS</span>`);
+    inProgress.forEach(i => lines.push(`<span class="d-printer">${machineTag(i.machine)} ${i.name}</span>${i.note ? `\n   ${i.note}` : ''}`));
+    lines.push('');
+  }
+
+  if (queued.length) {
+    lines.push(`<span class="d-header">UP NEXT</span>`);
+    queued.forEach(i => lines.push(`${machineTag(i.machine)} ${i.name}${i.source ? ` — ${i.source}` : ''}`));
+    lines.push('');
+  }
+
+  if (researched.length) {
+    lines.push(`<span class="d-header">RESEARCHED — ready to queue</span>`);
+    researched.forEach(i => lines.push(`${machineTag(i.machine)} ${i.name}${i.rating ? ` ⭐${i.rating}` : ''}`));
+    lines.push('');
+  }
+
+  if (ideas.length) {
+    lines.push(`<span class="d-header">IDEAS — researching now</span>`);
+    ideas.forEach(i => lines.push(`<span class="d-dim">${machineTag(i.machine)} ${i.name}</span>`));
+    lines.push('');
+  }
+
+  if (stale.length) {
+    lines.push(`<span class="d-warn">⚠ NEEDS DECISION</span>`);
+    stale.forEach(i => lines.push(`<span class="d-warn">${machineTag(i.machine)} ${i.name} — ${i.addedDaysAgo}d idle. Make it, archive it, or delete it?</span>`));
+    lines.push('');
+  }
+
+  if (done.length) {
+    lines.push(`<span class="d-done">✅ DONE THIS WEEK</span>`);
+    done.forEach(i => lines.push(`<span class="d-done">${machineTag(i.machine)} ${i.name}</span>`));
+    lines.push('');
+  }
+
+  const active = queueData.items.filter(i => i.status !== 'done');
+  lines.push(`<span class="d-dim">Queue depth: ${active.length} items | 3DP: ${active.filter(i=>i.machine==='3dp').length} | Laser: ${active.filter(i=>i.machine==='laser').length} | Plotter: ${active.filter(i=>i.machine==='plotter').length}</span>`);
+
+  document.getElementById('digest-preview').innerHTML = lines.join('\n');
+}
+
+function renderResearchLog() {
+  const log = document.getElementById('research-log');
+  const icons = { found: '🔎', notfound: '◯', design: '🛠️' };
+
+  queueData.researchLog.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'research-entry';
+    el.innerHTML = `
+      <div class="research-icon ${entry.type}">${icons[entry.type]}</div>
+      <div class="research-content">
+        <div class="research-query">${entry.query}</div>
+        <div class="research-result">${entry.url ? `<a href="${entry.url}" target="_blank">${entry.result}</a>` : entry.result}</div>
+      </div>
+      <div class="research-time">${entry.time}</div>
+    `;
+    log.appendChild(el);
+  });
+}
+
+function updateTimestamp() {
+  const now = new Date();
+  document.getElementById('ts').innerHTML =
+    now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) +
+    '<br>' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  // next digest
+  const next = new Date();
+  next.setHours(7,0,0,0);
+  if (next < now) next.setDate(next.getDate()+1);
+  const diff = Math.round((next - now) / 60000);
+  const h = Math.floor(diff/60), m = diff%60;
+  document.getElementById('next-digest').textContent = `${h}h ${m}m`;
+}
+
+// ── INIT ──
+renderStats();
+renderColumn('3dp',    'col-printer', 'count-printer');
+renderColumn('laser',  'col-laser',   'count-laser');
+renderColumn('plotter','col-plotter', 'count-plotter');
+renderDigest();
+renderResearchLog();
+updateTimestamp();
+setInterval(updateTimestamp, 30000);
+</script>
+</body>
+</html>
