@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUEUE — The Fabrication To-Make Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e0d;
+    --surface: #111614;
+    --surface2: #191e1c;
+    --border: #252e2a;
+    --q: #2dcea0;
+    --q-dim: #1a7a5e;
+    --q-glow: rgba(45,206,160,0.12);
+    --printer: #4fc3f7;
+    --laser: #ff7043;
+    --plotter: #ce93d8;
+    --text: #e0ece8;
+    --muted: #6b8078;
+    --tag-bg: #1a2420;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 64px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -150px; left: -100px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(45,206,160,0.09) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -200px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(79,195,247,0.05) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--q);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .eyebrow::before {
+    content: '▸';
+    color: var(--q-dim);
+  }
+
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(100px, 20vw, 220px);
+    line-height: 0.85;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 44px;
+  }
+
+  .hero h1 .accent { color: var(--q); }
+
+  .hero-sub {
+    font-size: 21px;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 620px;
+    line-height: 1.55;
+    margin-bottom: 52px;
+  }
+
+  .hero-sub strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .hero-pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  .pill-printer { border-color: rgba(79,195,247,0.4); color: var(--printer); background: rgba(79,195,247,0.07); }
+  .pill-laser   { border-color: rgba(255,112,67,0.4);  color: var(--laser);   background: rgba(255,112,67,0.07); }
+  .pill-plotter { border-color: rgba(206,147,216,0.4); color: var(--plotter); background: rgba(206,147,216,0.07); }
+  .pill-green   { border-color: rgba(45,206,160,0.4);  color: var(--q);       background: rgba(45,206,160,0.07); }
+
+  /* ── MACHINES BANNER ── */
+  .machines {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .machine {
+    padding: 40px 48px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .machine:last-child { border-right: none; }
+
+  .machine::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--mc);
+    opacity: 0.6;
+  }
+
+  .machine-emoji { font-size: 32px; margin-bottom: 14px; display: block; }
+
+  .machine-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--mc);
+    margin-bottom: 6px;
+  }
+
+  .machine-model {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+  }
+
+  .machine-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: none;
+  }
+
+  /* ── ARTICLE ── */
+  .article {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 100px 64px;
+  }
+
+  .section { margin-bottom: 120px; }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--q);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    width: 60px; height: 1px;
+    background: var(--border);
+  }
+
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(44px, 6vw, 76px);
+    line-height: 1;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  p {
+    color: #b8ccc6;
+    margin-bottom: 20px;
+    max-width: 720px;
+  }
+
+  .hl { color: var(--q); font-weight: 600; }
+
+  .callout {
+    border-left: 3px solid var(--q);
+    padding: 20px 28px;
+    background: var(--q-glow);
+    border-radius: 0 8px 8px 0;
+    margin: 36px 0;
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 500;
+    max-width: 700px;
+  }
+
+  .big-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(34px, 5vw, 60px);
+    line-height: 1.1;
+    border-left: 4px solid var(--q);
+    padding-left: 32px;
+    margin: 60px 0;
+    color: var(--text);
+  }
+
+  .mono { font-family: 'Space Mono', monospace; font-size: 13px; background: var(--surface2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; color: var(--q); }
+
+  /* ── TWO COL ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+    margin: 48px 0;
+  }
+
+  @media (max-width: 820px) {
+    .two-col { grid-template-columns: 1fr; }
+    .machines { grid-template-columns: 1fr; }
+    .hero { padding: 60px 28px; }
+    .article { padding: 60px 28px; }
+    .machine { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  /* ── TELEGRAM MOCKUP ── */
+  .tg {
+    background: #17212b;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #2a3642;
+    box-shadow: 0 32px 72px rgba(0,0,0,0.55);
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  }
+
+  .tg-head {
+    background: #232e3c;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #2a3642;
+  }
+
+  .tg-av {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--q) 0%, #1a9068 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .tg-nm { font-size: 15px; font-weight: 600; color: #fff; }
+  .tg-st { font-size: 12px; color: #54a0d9; }
+
+  .tg-msgs {
+    padding: 16px;
+    background: #0e1621;
+    display: flex; flex-direction: column;
+    gap: 7px;
+    min-height: 360px;
+  }
+
+  .msg {
+    max-width: 82%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .msg.out { background: #2b5278; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg.in  { background: #182533; color: #e8e8e8; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #2a3642; }
+  .msg .t  { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; text-align: right; }
+
+  .q-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    margin-right: 4px; vertical-align: middle;
+  }
+
+  .b-3d     { background: rgba(79,195,247,0.2);  color: #82d8ff; }
+  .b-laser  { background: rgba(255,112,67,0.2);   color: #ffb39a; }
+  .b-plot   { background: rgba(206,147,216,0.2);  color: #e0b8ff; }
+  .b-queue  { background: rgba(45,206,160,0.2);   color: #6ee8c4; }
+  .b-found  { background: rgba(255,193,7,0.2);    color: #ffd54f; }
+
+  /* ── RESEARCH PIPELINE ── */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin: 40px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pipeline::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(45,206,160,0.05) 0%, transparent 70%);
+  }
+
+  .pipe-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pipe-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    min-width: 150px;
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+    position: relative;
+  }
+
+  .pipe-step.input  { border-color: var(--q);       color: var(--q); }
+  .pipe-step.proc   { border-color: var(--printer);  color: var(--printer); }
+  .pipe-step.search { border-color: rgba(255,193,7,0.5); color: #ffd54f; }
+  .pipe-step.out    { border-color: var(--plotter);  color: var(--plotter); }
+
+  .pipe-step-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    opacity: 0.6;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .pipe-step-val {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .pipe-arrow {
+    color: var(--muted);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── SITE CARDS ── */
+  .sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 32px 0;
+  }
+
+  .site-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 18px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .site-card:hover {
+    border-color: var(--q-dim);
+    transform: translateY(-2px);
+  }
+
+  .site-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--q);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .site-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .site-tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── QUEUE FEED ── */
+  .qfeed {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .qfeed-head {
+    padding: 14px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .qfeed-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--q);
+  }
+
+  .qfeed-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .qitem {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .qitem:last-child { border-bottom: none; }
+
+  .qitem-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .qitem-body { flex: 1; }
+
+  .qitem-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+    margin-bottom: 4px;
+  }
+
+  .qitem-detail {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+    margin-bottom: 6px;
+  }
+
+  .qitem-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .qtag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .qstatus {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .qs-ready   { background: rgba(45,206,160,0.12); color: var(--q); border: 1px solid rgba(45,206,160,0.25); }
+  .qs-found   { background: rgba(255,193,7,0.12);  color: #ffd54f; border: 1px solid rgba(255,193,7,0.25); }
+  .qs-pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .qs-done    { background: rgba(79,195,247,0.1); color: var(--printer); border: 1px solid rgba(79,195,247,0.2); }
+
+  /* ── OWL COMPARE ── */
+  .compare {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 40px 0;
+  }
+
+  .compare-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chead-cell {
+    padding: 16px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .chead-cell:first-child {
+    border-right: 1px solid var(--border);
+    color: #f0c060;
+  }
+
+  .chead-cell:last-child {
+    color: var(--q);
+  }
+
+  .crow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .crow:last-child { border-bottom: none; }
+
+  .crow-cell {
+    padding: 14px 24px;
+    font-size: 14px;
+    color: #b8ccc6;
+    line-height: 1.45;
+  }
+
+  .crow-cell:first-child {
+    border-right: 1px solid var(--border);
+    color: #c8c0a0;
+  }
+
+  /* ── DIGEST MOCKUP ── */
+  .digest {
+    background: #1a2028;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #2a3444;
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    max-width: 440px;
+  }
+
+  .dig-head {
+    background: #141b24;
+    padding: 18px 20px;
+    border-bottom: 1px solid #2a3444;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dig-from { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .dig-subj { font-size: 15px; font-weight: 600; color: #fff; }
+  .dig-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,var(--q),#1a9068); display:flex;align-items:center;justify-content:center;font-size:18px; }
+
+  .dig-body { padding: 20px; }
+
+  .dig-intro {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .dig-card {
+    background: #222b36;
+    border-radius: 10px;
+    border: 1px solid #2e3d4e;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .dig-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .dig-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8ece8;
+  }
+
+  .dig-machine-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .dig-research {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.5;
+  }
+
+  .dig-link {
+    font-size: 11px;
+    color: var(--q);
+    text-decoration: none;
+    display: block;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  /* ── STATS ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 48px 0;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 30px 26px;
+  }
+
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--q);
+    margin-bottom: 8px;
+  }
+
+  .stat-label { font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .footer-brand { color: var(--q); font-size: 15px; letter-spacing: 0.1em; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade { animation: fadeUp 0.7s forwards; }
+  .d1 { animation-delay: 0.1s; }
+  .d2 { animation-delay: 0.25s; }
+  .d3 { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="eyebrow fade">OpenClaw Agent Documentation · Dubble-O Design Co.</div>
+  <h1 class="fade d1">Q<span class="accent">UE</span>UE</h1>
+  <p class="hero-sub fade d2">
+    The fabrication to-make agent that catches what you want to build — before the idea floats away — and <strong>researches whether someone's already built it for you.</strong>
+  </p>
+  <div class="hero-pills fade d3">
+    <span class="pill pill-printer">🖨 3D Printer</span>
+    <span class="pill pill-laser">⚡ Laser Cutter</span>
+    <span class="pill pill-plotter">✒️ Pen Plotter</span>
+    <span class="pill pill-green">Research Engine</span>
+    <span class="pill pill-green">Daily Digest</span>
+  </div>
+</section>
+
+<!-- ── MACHINE ROSTER ── -->
+<div class="machines">
+  <div class="machine" style="--mc: var(--printer)">
+    <span class="machine-emoji">🖨️</span>
+    <div class="machine-name">3D Printer</div>
+    <div class="machine-model">BAMBU LAB</div>
+    <div class="machine-desc">FDM filament printing. Functional parts, product prototypes, jigs, fixtures, enclosures. QUEUE tracks file-ready jobs vs. ideas still needing a model source.</div>
+  </div>
+  <div class="machine" style="--mc: var(--laser)">
+    <span class="machine-emoji">⚡</span>
+    <div class="machine-name">Laser Cutter</div>
+    <div class="machine-model">THUNDER LASER NOVA 51</div>
+    <div class="machine-desc">CO₂ laser for acrylic, wood, leather, rubber. Powers the rubber stamp line, embossing dies, and acrylic template kits. QUEUE logs material, power, and speed settings alongside jobs.</div>
+  </div>
+  <div class="machine" style="--mc: var(--plotter)">
+    <span class="machine-emoji">✒️</span>
+    <div class="machine-name">Pen Plotter</div>
+    <div class="machine-model">UUNATEK A1</div>
+    <div class="machine-desc">Ink-on-paper precision line work. Portrait service, custom artwork, technical drawings. QUEUE tracks portrait commissions and plotter-specific design requests separately from fabrication jobs.</div>
+  </div>
+</div>
+
+<!-- ── ARTICLE ── -->
+<main class="article">
+
+  <!-- THE PROBLEM -->
+  <section class="section">
+    <div class="section-label">01 — The Problem</div>
+    <h2>THE MACHINE IS IDLE.<br>THE IDEA IS GONE.</h2>
+
+    <p>Running three fabrication machines simultaneously means there's always a gap between inspiration and execution. An idea for a new jig hits while you're mid-job on the laser. A customer asks if you could cut something and the conversation moves on. You see a cool design online and think "I should make that" — then forget about it entirely by the time you sit down at the Mac.</p>
+
+    <p>The problem isn't motivation or skill. It's that <span class="hl">there's no reliable system between "I want to make that" and "it's in the queue."</span> The Bambu sits idle during prime build hours because the ideas that would fill it live in your head, not in a machine-readable list.</p>
+
+    <p>And beyond just capturing what to make, there's a second problem: you might spend 3 hours modeling something that already exists as a free download on Thangs. Or pays better to buy from a supplier. Or requires a material you don't stock. Without research, the queue is just a wish list.</p>
+
+    <div class="callout">
+      QUEUE was built to solve both problems at once: capture the idea with zero friction, then do the research automatically so by the time you're ready to run a job, you know exactly what you're printing, where the file came from, and whether it's worth making at all.
+    </div>
+  </section>
+
+  <!-- WHAT QUEUE IS -->
+  <section class="section">
+    <div class="section-label">02 — What QUEUE Is</div>
+    <h2>OWL FOR YOUR<br>MACHINES</h2>
+
+    <p>QUEUE is a direct descendant of OWL — it's the same architecture, the same Telegram-first interface, the same cron-driven digest loop. The difference is what it <em>does</em> with what you send it.</p>
+
+    <p>Where OWL categorizes your general thoughts into pellets and routes them to the right business agent, QUEUE is purpose-built for one thing: <span class="hl">managing what you want to fabricate</span>. It receives your build ideas, tags them to the right machine, researches whether a file or design already exists online, and delivers a daily digest showing you what's ready to run and what it found.</p>
+
+    <div class="compare">
+      <div class="compare-head">
+        <div class="chead-cell">🦉 OWL</div>
+        <div class="chead-cell">🖨️ QUEUE</div>
+      </div>
+      <div class="crow">
+        <div class="crow-cell">General thought capture — ideas, todos, reminders, research, memories</div>
+        <div class="crow-cell">Fabrication-specific capture — build jobs for printer, laser, plotter</div>
+      </div>
+      <div class="crow">
+        <div class="crow-cell">Routes to business agents (Dubble-O, BermSnap, Hauler, etc.)</div>
+        <div class="crow-cell">Routes to machines — tags by 3D printer, laser, or plotter</div>
+      </div>
+      <div class="crow">
+        <div class="crow-cell">Research pellets queue for async deep-dive on ideas</div>
+        <div class="crow-cell">Every entry auto-researches Thangs, Cults3D, MakerWorld, Thingiverse, Printables</div>
+      </div>
+      <div class="crow">
+        <div class="crow-cell">Digest delivered via email + iMessage with swipe interface</div>
+        <div class="crow-cell">Digest delivered via Telegram + email, same swipe-to-decide flow</div>
+      </div>
+      <div class="crow">
+        <div class="crow-cell">Channels: Telegram (primary), iMessage (via ATLAS)</div>
+        <div class="crow-cell">Channels: Telegram (primary), inherits ATLAS routing from OWL</div>
+      </div>
+    </div>
+
+    <div class="big-quote">
+      "Same guts as OWL.<br>Different purpose."
+    </div>
+
+    <!-- Telegram mockup -->
+    <div class="two-col">
+      <div class="tg">
+        <div class="tg-head">
+          <div class="tg-av">🖨️</div>
+          <div>
+            <div class="tg-nm">QUEUE</div>
+            <div class="tg-st">online</div>
+          </div>
+        </div>
+        <div class="tg-msgs">
+          <div class="msg out">
+            print — make a benchy just to test the new filament
+            <div class="t">8:47 AM</div>
+          </div>
+          <div class="msg in">
+            <span class="q-badge b-3d">3D PRINT</span> Added to queue.<br><br>
+            <strong>Test benchy — filament QC</strong><br>
+            Found: Benchy on all major platforms. Recommending MakerWorld v2.0 (highest community rating). Print time ~35min @ standard settings.
+            <div class="t">8:47 AM</div>
+          </div>
+          <div class="msg out">
+            laser — cut some coaster blanks from the 3mm birch I have
+            <div class="t">9:12 AM</div>
+          </div>
+          <div class="msg in">
+            <span class="q-badge b-laser">LASER</span> Added to queue.<br><br>
+            <strong>Birch coaster blanks</strong><br>
+            No file needed — standard circle path. Suggested: 90mm diameter. Last known settings: 65% power, 18mm/s. Material: 3mm Baltic birch on hand.
+            <div class="t">9:12 AM</div>
+          </div>
+          <div class="msg out">
+            plotter — want to do a portrait of my dog in the style of crosshatch line art
+            <div class="t">10:30 AM</div>
+          </div>
+          <div class="msg in">
+            <span class="q-badge b-plot">PLOTTER</span> Added to queue.<br><br>
+            <strong>Dog portrait — crosshatch style</strong><br>
+            No public file available (custom portrait). Found: 3 crosshatch portrait generators on GitHub. Will need source photo. Flagging for manual workflow.
+            <div class="t">10:30 AM</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>How you add to it</h3>
+        <p>The same way you add to OWL: open Telegram, fire off a message. You can start with the machine name (<span class="mono">print —</span>, <span class="mono">laser —</span>, <span class="mono">plotter —</span>) or just describe what you want and let QUEUE infer which machine it's for.</p>
+        <p>QUEUE responds immediately with confirmation and a quick research hit — did it find a file? What platform? Are there settings already logged from a previous similar job?</p>
+        <p>No app to open. No category to pick. No project to assign. You're in the shop, you have an idea, you send a message and get back to work.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH ENGINE -->
+  <section class="section">
+    <div class="section-label">03 — The Research Engine</div>
+    <h2>DON'T DESIGN<br>WHAT ALREADY EXISTS</h2>
+
+    <p>The part that makes QUEUE more than just a glorified notes app is what happens after you submit a job. Every entry automatically triggers a background research sweep across the major fabrication file platforms — looking for existing models, SVG packs, design resources, and community builds that match what you described.</p>
+
+    <div class="pipeline">
+      <div class="pipe-row">
+        <div class="pipe-step input">
+          <div class="pipe-step-label">Input</div>
+          <div class="pipe-step-val">Raw idea via Telegram</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step proc">
+          <div class="pipe-step-label">Classify</div>
+          <div class="pipe-step-val">Machine type + intent + complexity</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step search">
+          <div class="pipe-step-label">Research</div>
+          <div class="pipe-step-val">Sweep 5+ platforms for existing files</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step out">
+          <div class="pipe-step-label">Enrich</div>
+          <div class="pipe-step-val">Settings + source + make/buy recommendation</div>
+        </div>
+      </div>
+      <div class="pipe-row" style="margin-bottom: 0;">
+        <div class="pipe-step" style="flex: none; min-width: auto; padding: 12px 16px; font-size: 12px; color: var(--muted);">Queue entry stored with full context</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" style="flex: none; min-width: auto; padding: 12px 16px; font-size: 12px; color: var(--muted);">Daily digest compiled at morning cron</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" style="flex: none; min-width: auto; padding: 12px 16px; font-size: 12px; color: var(--muted);">Delivered via Telegram + email</div>
+      </div>
+    </div>
+
+    <p>The research isn't just a link dump — QUEUE evaluates what it finds. If there are 40 Thingiverse results for "cable management clip" it picks the highest-rated ones, notes the print settings community members recommend, and flags if any require post-processing or supports. If it finds nothing, it says so clearly and marks the job as needs-custom-design.</p>
+
+    <h3 style="margin-top: 40px;">Where it searches</h3>
+
+    <div class="sites-grid">
+      <div class="site-card">
+        <div class="site-name">THANGS</div>
+        <div class="site-desc">Geometric search — finds visually similar models even without keyword match</div>
+        <span class="site-tag">3D PRINT</span>
+      </div>
+      <div class="site-card">
+        <div class="site-name">CULTS3D</div>
+        <div class="site-desc">Premium and free designer files, strong for ornamental and decorative work</div>
+        <span class="site-tag">3D PRINT</span>
+      </div>
+      <div class="site-card">
+        <div class="site-name">MAKERWORLD</div>
+        <div class="site-desc">Bambu Lab's native platform — profiles pre-tuned for Bambu printers</div>
+        <span class="site-tag">3D PRINT</span>
+      </div>
+      <div class="site-card">
+        <div class="site-name">THINGIVERSE</div>
+        <div class="site-desc">Largest community library. Older files but massive catalog breadth</div>
+        <span class="site-tag">3D PRINT</span>
+      </div>
+      <div class="site-card">
+        <div class="site-name">PRINTABLES</div>
+        <div class="site-desc">Prusa's platform — high quality curation, strong community ratings</div>
+        <span class="site-tag">3D PRINT</span>
+      </div>
+      <div class="site-card">
+        <div class="site-name">DESIGN BUNDLES</div>
+        <div class="site-desc">SVG and cut file bundles — strong for laser and plotter artwork</div>
+        <span class="site-tag">LASER / PLOT</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE QUEUE FEED -->
+  <section class="section">
+    <div class="section-label">04 — The Queue Dashboard</div>
+    <h2>YOUR SHOP'S<br>BACKLOG, ORGANIZED</h2>
+
+    <p>Every item you send QUEUE lives in a structured feed — organized by machine, tagged with status, and enriched with whatever research came back. The dashboard shows you exactly what's ready to run, what needs a file, and what's been completed.</p>
+
+    <div class="two-col">
+      <div>
+        <h3>Six job statuses</h3>
+        <p>Items move through a defined workflow from the moment you add them to the moment they're done. You can update status by sending QUEUE a message or tapping the item in the dashboard modal.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin: 24px 0;">
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: rgba(45,206,160,0.12); color: var(--q); border: 1px solid rgba(45,206,160,0.25); min-width: 90px; text-align: center;">READY</span>
+            <span style="font-size: 14px; color: var(--muted);">File found, settings known, ready to run now</span>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: rgba(255,193,7,0.12); color: #ffd54f; border: 1px solid rgba(255,193,7,0.25); min-width: 90px; text-align: center;">FOUND</span>
+            <span style="font-size: 14px; color: var(--muted);">Research returned a result — needs your review</span>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: rgba(79,195,247,0.1); color: var(--printer); border: 1px solid rgba(79,195,247,0.2); min-width: 90px; text-align: center;">PRINTING</span>
+            <span style="font-size: 14px; color: var(--muted);">Currently on the machine</span>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); min-width: 90px; text-align: center;">PENDING</span>
+            <span style="font-size: 14px; color: var(--muted);">Captured, research in progress</span>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); min-width: 90px; text-align: center;">NEEDS FILE</span>
+            <span style="font-size: 14px; color: var(--muted);">Nothing found online — custom design required</span>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 3px; background: rgba(45,206,160,0.06); color: var(--q-dim); border: 1px solid rgba(45,206,160,0.12); min-width: 90px; text-align: center;">DONE</span>
+            <span style="font-size: 14px; color: var(--muted);">Job complete — stays in history</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="qfeed">
+        <div class="qfeed-head">
+          <span class="qfeed-title">QUEUE FEED</span>
+          <span class="qfeed-meta">7 items · 3 ready</span>
+        </div>
+        <div class="qitem">
+          <div class="qitem-icon">🖨️</div>
+          <div class="qitem-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="qitem-name">Gridfinity bin — 3×2 for endmills</div>
+              <span class="qstatus qs-ready">READY</span>
+            </div>
+            <div class="qitem-detail">Found on Printables (4.8★ · 2.1k makes). Print time ~2h. No supports.</div>
+            <div class="qitem-tags">
+              <span class="qtag" style="color: var(--printer); border-color: rgba(79,195,247,0.2);">3D PRINT</span>
+              <span class="qtag">PERSONAL</span>
+              <span class="qtag">PRINTABLES</span>
+            </div>
+          </div>
+        </div>
+        <div class="qitem">
+          <div class="qitem-icon">⚡</div>
+          <div class="qitem-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="qitem-name">Personalized dog tags — batch of 12</div>
+              <span class="qstatus qs-ready">READY</span>
+            </div>
+            <div class="qitem-detail">No file needed — custom text engraving. Settings: 70% power, 200mm/s, 3mm aluminum.</div>
+            <div class="qitem-tags">
+              <span class="qtag" style="color: var(--laser); border-color: rgba(255,112,67,0.2);">LASER</span>
+              <span class="qtag">COMMERCIAL</span>
+            </div>
+          </div>
+        </div>
+        <div class="qitem">
+          <div class="qitem-icon">✒️</div>
+          <div class="qitem-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="qitem-name">Portrait — Neall's dog, crosshatch style</div>
+              <span class="qstatus qs-found">FOUND</span>
+            </div>
+            <div class="qitem-detail">No direct match. Found 3 crosshatch generators on GitHub. Needs source photo.</div>
+            <div class="qitem-tags">
+              <span class="qtag" style="color: var(--plotter); border-color: rgba(206,147,216,0.2);">PLOTTER</span>
+              <span class="qtag">NEEDS REVIEW</span>
+            </div>
+          </div>
+        </div>
+        <div class="qitem">
+          <div class="qitem-icon">🖨️</div>
+          <div class="qitem-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="qitem-name">Wall-mount bracket for Ryobi drill</div>
+              <span class="qstatus qs-pending">PENDING</span>
+            </div>
+            <div class="qitem-detail">Research in progress...</div>
+            <div class="qitem-tags">
+              <span class="qtag" style="color: var(--printer); border-color: rgba(79,195,247,0.2);">3D PRINT</span>
+              <span class="qtag">PERSONAL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE DIGEST -->
+  <section class="section">
+    <div class="section-label">05 — The Daily Digest</div>
+    <h2>WHAT'S READY TO<br>RUN THIS MORNING</h2>
+
+    <p>At 9:15 AM every morning, QUEUE sends a digest — the same format OWL uses, the same pipeline. It compiles everything you've added since the last digest that has a research result, organizes it by machine, and delivers it via Telegram and email.</p>
+
+    <p>The digest is deliberately actionable. It doesn't just list what's in the queue — it tells you <span class="hl">what you can run right now</span>. "3 jobs ready for the printer. 1 laser job waiting on a file. 2 plotter jobs need your photos." You read it at 9am, walk into the shop, and know exactly what to load up.</p>
+
+    <div class="two-col" style="margin-top: 48px;">
+      <div>
+        <h3>The 9:15 AM cron</h3>
+        <p>QUEUE's heartbeat mirrors OWL's exactly — it's a cron job that fires at 9:15 AM, reads through the queue memory files, compiles all items that received research results overnight, groups them by machine, and generates the digest. Overnight research runs separately on items added the day before.</p>
+        <p>The timing is intentional: you wake up, check the morning brief from ATLAS at 7:30, get oriented to the day, then QUEUE fires at 9:15 with the shop-specific rundown — right as you're heading into the shop for the first run of the day.</p>
+        <p>Like OWL, the digest can also be triggered on-demand. Message QUEUE "what's ready?" and it compiles a quick status summary on the spot.</p>
+      </div>
+      <div class="digest">
+        <div class="dig-head">
+          <div class="dig-av">🖨️</div>
+          <div>
+            <div class="dig-from">QUEUE · 9:15 AM</div>
+            <div class="dig-subj">Shop Report — 3 ready to run</div>
+          </div>
+        </div>
+        <div class="dig-body">
+          <div class="dig-intro">Morning. You've got 3 jobs ready and 2 waiting on files. Here's what's on deck:</div>
+
+          <div class="dig-card">
+            <div class="dig-card-top">
+              <span class="dig-card-name">Gridfinity endmill bins</span>
+              <span class="dig-machine-badge" style="background: rgba(79,195,247,0.15); color: var(--printer);">3D PRINT</span>
+            </div>
+            <div class="dig-research">Printables · 4.8★ · ~2h print. No supports, no hardware. File link ready.</div>
+            <a class="dig-link" href="#">→ View on Printables</a>
+          </div>
+
+          <div class="dig-card">
+            <div class="dig-card-top">
+              <span class="dig-card-name">Dog tag batch (12)</span>
+              <span class="dig-machine-badge" style="background: rgba(255,112,67,0.15); color: var(--laser);">LASER</span>
+            </div>
+            <div class="dig-research">No file needed. Text engraving. Settings: 70% / 200mm/s / 3mm aluminum.</div>
+          </div>
+
+          <div class="dig-card">
+            <div class="dig-card-top">
+              <span class="dig-card-name">Dog portrait (plotter)</span>
+              <span class="dig-machine-badge" style="background: rgba(206,147,216,0.15); color: var(--plotter);">PLOTTER</span>
+            </div>
+            <div class="dig-research">Needs source photo before workflow starts. 3 generators found — ready when you send the photo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY I BUILT IT -->
+  <section class="section">
+    <div class="section-label">06 — Why I Built It</div>
+    <h2>THE MACHINE<br>DESERVES BETTER</h2>
+
+    <p>The Bambu Lab and the Thunder Laser are serious machines. They're fast, capable, and can produce real revenue. But they only produce revenue when they're running — and they only run when there's something in the queue.</p>
+
+    <p>Before QUEUE, "what to make next" lived in three places: a half-started Apple Note, a few screenshots in my camera roll, and my head. None of those places talk to each other, none of them tell me if a file exists, and none of them fire up on their own at 9am and say "hey, here's what you could run today."</p>
+
+    <p>The deeper issue is that every time I had to stop and figure out what to print next, it was a context switch — a decision I had to make under production pressure. QUEUE eliminates that decision entirely. The queue is always populated. The research is already done. When you walk into the shop, you already know what you're running.</p>
+
+    <div class="callout">
+      QUEUE is also an ADHD accommodation — same as OWL. The machines don't care if you're focused or scattered. But the system has to work when you're not. QUEUE keeps the shop moving even when your brain is in three other places.
+    </div>
+
+    <p>The research layer was the key insight. The moment QUEUE started automatically checking Thangs and MakerWorld before I even thought to look, it started saving real hours. Designs I would have modeled from scratch — already there, community-tested, printer-ready. That time goes back into the shop, not into CAD.</p>
+  </section>
+
+  <!-- STATS -->
+  <section class="section">
+    <div class="section-label">07 — The Payoff</div>
+    <h2>MACHINES DON'T<br>WAIT FOR IDEAS</h2>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val">3</div>
+        <div class="stat-label">Machines managed from one Telegram inbox</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">6+</div>
+        <div class="stat-label">File platforms searched automatically per job</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">9:15</div>
+        <div class="stat-label">AM — when the daily shop report hits your phone</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">0</div>
+        <div class="stat-label">Decisions required to add a job to the queue</div>
+      </div>
+    </div>
+
+    <p>The before/after is simple: before QUEUE, the machines waited for Neall to figure out what to run. After QUEUE, Neall checks his phone at 9am and already knows. The shop starts faster, the machines run more, and the good ideas don't evaporate between the moment they hit and the moment there's time to act on them.</p>
+
+    <p>QUEUE is also the proof of concept for a broader principle in the OpenClaw system: <span class="hl">every domain gets its own OWL</span>. One agent for thoughts. One for fabrication. One for leads. One for events. Each one does one thing extremely well, speaks the same language (Telegram, daily digest, pellet/queue format), and feeds back into the master system through ATLAS.</p>
+  </section>
+
+  <!-- TECHNICAL -->
+  <section class="section">
+    <div class="section-label">08 — Under the Hood</div>
+    <h2>BUILT ON OWL'S<br>SKELETON</h2>
+
+    <p>QUEUE runs as an OpenClaw agent on the M4 Pro Mac Mini, Telegram-bound, with a cron heartbeat that mirrors OWL's configuration exactly. The workspace structure is identical — SOUL.md, IDENTITY.md, AGENTS.md, HEARTBEAT.md — but the persona and instructions are fabrication-specific.</p>
+
+    <div class="pipeline" style="padding: 32px 28px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <div>
+          <div class="section-label" style="margin-bottom: 12px">RUNTIME</div>
+          <p style="font-size: 14px; color: var(--muted); max-width: none;">OpenClaw agent runtime · Mac Mini M4 Pro · Node-based process · Session logs at <span class="mono">~/.openclaw/agents/queue/sessions/</span></p>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom: 12px">CHANNEL</div>
+          <p style="font-size: 14px; color: var(--muted); max-width: none;">Telegram bot · Bound via <span class="mono">openclaw agents bindings</span> · Private bot, registered peer IDs only</p>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom: 12px">HEARTBEAT</div>
+          <p style="font-size: 14px; color: var(--muted); max-width: none;">Cron fires at 9:15 AM daily · Reads queue memory files · Compiles research results · Delivers via Telegram + email digest</p>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom: 12px">STORAGE</div>
+          <p style="font-size: 14px; color: var(--muted); max-width: none;">Queue entries stored as JSONL in <span class="mono">~/.openclaw/workspace-queue/queue/</span> · Research cache at <span class="mono">research-cache/</span> · Status tracked per-item</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 36px;">The installer script creates the entire workspace in one command — directory structure, all MD persona files, cron registration, Telegram binding — so the agent is fully operational from a single terminal run. The pattern is identical to the Hauler and Sock Riot agent installers, all part of the same OpenClaw stack.</p>
+    <p>The research sweep runs asynchronously after each item is added — it doesn't block your Telegram response. You get the immediate capture confirmation first, then a follow-up message when research completes, usually within 30–60 seconds.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div>
+    <div class="footer-brand">DUBBLE-O DESIGN CO.</div>
+    <div style="margin-top: 6px;">Chelsea, Michigan · OpenClaw Agent Documentation</div>
+  </div>
+  <div style="text-align: right;">
+    <div style="color: var(--q); margin-bottom: 4px;">QUEUE — Fabrication To-Make Agent</div>
+    <div>Part of the OpenClaw ecosystem</div>
+  </div>
+</footer>
+
+</body>
+</html>
