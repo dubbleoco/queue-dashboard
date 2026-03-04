@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "updated": "2026-03-03",
+  "items": [
+    {
+      "id": "q001",
+      "name": "Waterloo Golf & Country Club Coasters",
+      "machine": "laser",
+      "status": "queued",
+      "purpose": "commercial",
+      "addedBy": "neall",
+      "addedDaysAgo": 0,
+      "source": "custom",
+      "sourceUrl": "https://waterloocountryclub.com",
+      "rating": null,
+      "downloads": null,
+      "note": "20x round cork coasters, laser engrave. Cork = low power, high contrast — will look sharp. 🚩 LOGO: No public SVG/hi-res logo found online. Neall has a file — needs to hand it off. SVG strongly preferred; if only raster available, will need to vectorize before sending to laser. Club site: waterloocountryclub.com | IG: @waterloogcc"
+    }
+  ],
+  "researchLog": [
+    {
+      "id": "r001",
+      "date": "2026-03-03",
+      "query": "Waterloo Golf & Country Club logo SVG PNG high-res",
+      "result": "No public logo found. waterloocountryclub.com exists (founded 1925, 9-hole course, Waterloo IL). No downloadable logo or crest located. Neall's file is the path forward."
+    }
+  ],
+  "doneThisWeek": []
+}
