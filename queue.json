@@ -15,6 +15,20 @@
       "rating": null,
       "downloads": null,
       "note": "20x round cork coasters, laser engrave. Cork = low power, high contrast — will look sharp. 🚩 LOGO: No public SVG/hi-res logo found online. Neall has a file — needs to hand it off. SVG strongly preferred; if only raster available, will need to vectorize before sending to laser. Club site: waterloocountryclub.com | IG: @waterloogcc"
+    },
+    {
+      "id": "q002",
+      "name": "Dyson V11 Wall Dock Bracket",
+      "machine": "3dp",
+      "status": "queued",
+      "purpose": "personal",
+      "addedBy": "neall",
+      "addedDaysAgo": 0,
+      "source": "makerworld",
+      "sourceUrl": "https://makerworld.com/en/models/683170",
+      "rating": null,
+      "downloads": null,
+      "note": "Holds 4–6 accessories. Hardware required for assembly: 2mm×22mm stainless pin + small compression spring — source before printing."
     }
   ],
   "researchLog": [
