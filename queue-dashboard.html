@@ -634,6 +634,62 @@
   .stat:nth-child(4) { animation-delay: 0.15s; }
   .stat:nth-child(5) { animation-delay: 0.20s; }
   .stat:nth-child(6) { animation-delay: 0.25s; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 6px; width: 480px; max-width: 95vw;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    transform: translateY(12px); transition: transform 0.2s; overflow: hidden;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; flex: 1; }
+  .modal-machine { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.15s; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-section-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .status-grid, .purpose-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .status-btn, .purpose-btn {
+    padding: 8px 6px; border-radius: 3px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s; text-align: center;
+  }
+  .status-btn:hover, .purpose-btn:hover { border-color: var(--border2); color: var(--text); }
+  .status-btn.active-idea        { border-color: var(--idle);    color: var(--idle);    background: rgba(107,114,128,0.1); }
+  .status-btn.active-researched  { border-color: var(--laser);   color: var(--laser);   background: var(--laser-dim); }
+  .status-btn.active-queued      { border-color: var(--warning); color: var(--warning); background: rgba(251,191,36,0.1); }
+  .status-btn.active-in_progress { border-color: var(--done);    color: var(--done);    background: rgba(74,222,128,0.1); }
+  .status-btn.active-done        { border-color: var(--done);    color: var(--done);    background: rgba(74,222,128,0.1); }
+  .status-btn.active-stale       { border-color: var(--warning); color: var(--warning); background: rgba(251,191,36,0.08); }
+  .purpose-btn.active-personal   { border-color: #A78BFA; color: #A78BFA; background: rgba(167,139,250,0.1); }
+  .purpose-btn.active-commercial { border-color: var(--printer); color: var(--printer); background: var(--printer-dim); }
+  .purpose-btn.active-unknown    { border-color: var(--idle); color: var(--idle); background: rgba(107,114,128,0.1); }
+  .modal-note { font-size: 11px; color: var(--muted); line-height: 1.6; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 10px 12px; font-style: italic; }
+  .modal-source { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+  .modal-source a { color: var(--laser); text-decoration: none; }
+  .modal-source a:hover { text-decoration: underline; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .btn-delete { padding: 7px 14px; border-radius: 3px; border: 1px solid rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); color: #F87171; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .btn-delete:hover { background: rgba(248,113,113,0.12); }
+  .btn-save { padding: 7px 20px; border-radius: 3px; border: 1px solid rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); color: var(--done); font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .btn-save:hover { background: rgba(74,222,128,0.14); }
+  .item { cursor: pointer; }
+  .save-toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface2); border: 1px solid var(--done); color: var(--done); font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 10px 16px; border-radius: 4px; z-index: 300; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+  .save-toast.show { opacity: 1; transform: translateY(0); }
+
 </style>
 </head>
 <body>
@@ -888,6 +944,8 @@ function renderItem(item) {
     <div class="item-tags">${purposeTag}${addedByTag}</div>
     ${extra}
   `;
+  el.addEventListener('click', () => openModal(item, queueData));
+  el.addEventListener('click', () => openModal(item, currentData || {}));
   return el;
 }
 
@@ -1025,6 +1083,153 @@ function updateTimestamp() {
 loadData();
 setInterval(loadData, 5 * 60 * 1000); // refresh every 5 minutes
 setInterval(updateTimestamp, 30000);
+
+const API_URL = 'http://127.0.0.1:7823';
+let currentItem = null, currentData = null, pendingStatus = null, pendingPurpose = null;
+
+function openModal(item, data) {
+  currentItem = item; currentData = data;
+  pendingStatus = item.status; pendingPurpose = item.purpose || 'unknown';
+  document.getElementById('modal-title').textContent = item.name;
+  const ml = {'3dp':'Bambu Lab','laser':'Thunder Nova 51','plotter':'UUNATEK A1'};
+  document.getElementById('modal-machine').textContent = ml[item.machine] || item.machine;
+  const sw = document.getElementById('modal-source-wrap');
+  if (item.source) {
+    sw.style.display = 'block';
+    document.getElementById('modal-source').innerHTML = item.sourceUrl
+      ? '<a href="'+item.sourceUrl+'" target="_blank">'+item.source+'</a>'+(item.rating?' — '+item.rating+(item.downloads?' · '+item.downloads+' dl':''):'')
+      : item.source;
+  } else sw.style.display = 'none';
+  const nw = document.getElementById('modal-note-wrap');
+  if (item.note) { nw.style.display='block'; document.getElementById('modal-note').textContent=item.note; }
+  else nw.style.display='none';
+  updateStatusBtns(); updatePurposeBtns();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  currentItem=null; pendingStatus=null; pendingPurpose=null;
+}
+function setStatus(s) { pendingStatus=s; updateStatusBtns(); }
+function setPurpose(p) { pendingPurpose=p; updatePurposeBtns(); }
+function updateStatusBtns() {
+  document.querySelectorAll('.status-btn').forEach(b => {
+    b.className='status-btn';
+    if(b.dataset.status===pendingStatus) b.classList.add('active-'+pendingStatus);
+  });
+}
+function updatePurposeBtns() {
+  document.querySelectorAll('.purpose-btn').forEach(b => {
+    b.className='purpose-btn';
+    if(b.dataset.purpose===pendingPurpose) b.classList.add('active-'+pendingPurpose);
+  });
+}
+function deleteItem() {
+  if (!currentItem||!currentData) return;
+  if (!confirm('Delete "'+currentItem.name+'"?')) return;
+  currentData.items = currentData.items.filter(i=>i.id!==currentItem.id);
+  currentData.updated = new Date().toISOString().split('T')[0];
+  pushToAPI(currentData); closeModal(); rerenderAll(currentData); showToast('Deleted and syncing');
+}
+function saveChanges() {
+  if (!currentItem||!currentData) return;
+  const idx = currentData.items.findIndex(i=>i.id===currentItem.id);
+  if (idx===-1) return;
+  if (pendingStatus==='done' && currentItem.status!=='done') {
+    currentData.doneThisWeek = currentData.doneThisWeek||[];
+    currentData.doneThisWeek.push({name:currentItem.name,machine:currentItem.machine,completedDaysAgo:0});
+    currentData.items.splice(idx,1);
+  } else {
+    currentData.items[idx].status=pendingStatus;
+    currentData.items[idx].purpose=pendingPurpose;
+  }
+  currentData.updated = new Date().toISOString().split('T')[0];
+  pushToAPI(currentData); closeModal(); rerenderAll(currentData);
+}
+async function pushToAPI(data) {
+  try {
+    const res = await fetch(API_URL+'/queue', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data,null,2),
+      signal:AbortSignal.timeout(3000)
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    showToast('Saved and syncing to GitHub');
+  } catch(err) {
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='queue.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Downloaded — drop into workspace-queue/queue/');
+  }
+}
+function rerenderAll(data) {
+  ['col-printer','col-laser','col-plotter'].forEach(id=>document.getElementById(id).innerHTML='');
+  renderStats(data);
+  renderColumn(data,'3dp','col-printer','count-printer');
+  renderColumn(data,'laser','col-laser','count-laser');
+  renderColumn(data,'plotter','col-plotter','count-plotter');
+  renderDigest(data);
+}
+function showToast(msg) {
+  const t=document.getElementById('save-toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+document.getElementById('modal-overlay').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
 </script>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-machine" id="modal-machine"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="modal-section-label">Status</div>
+        <div class="status-grid">
+          <button class="status-btn" data-status="idea" onclick="setStatus('idea')">Idea</button>
+          <button class="status-btn" data-status="researched" onclick="setStatus('researched')">Researched</button>
+          <button class="status-btn" data-status="queued" onclick="setStatus('queued')">Queued</button>
+          <button class="status-btn" data-status="in_progress" onclick="setStatus('in_progress')">In Progress</button>
+          <button class="status-btn" data-status="stale" onclick="setStatus('stale')">Stale</button>
+          <button class="status-btn" data-status="done" onclick="setStatus('done')">Done</button>
+        </div>
+      </div>
+      <div>
+        <div class="modal-section-label">Purpose</div>
+        <div class="purpose-grid">
+          <button class="purpose-btn" data-purpose="personal" onclick="setPurpose('personal')">Personal</button>
+          <button class="purpose-btn" data-purpose="commercial" onclick="setPurpose('commercial')">Commercial</button>
+          <button class="purpose-btn" data-purpose="unknown" onclick="setPurpose('unknown')">Unknown</button>
+        </div>
+      </div>
+      <div id="modal-source-wrap" style="display:none">
+        <div class="modal-section-label">Source</div>
+        <div class="modal-source" id="modal-source"></div>
+      </div>
+      <div id="modal-note-wrap" style="display:none">
+        <div class="modal-section-label">Notes</div>
+        <div class="modal-note" id="modal-note"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-delete" onclick="deleteItem()">Delete Item</button>
+      <button class="btn-save" onclick="saveChanges()">Save Changes</button>
+    </div>
+  </div>
+</div>
+<div class="save-toast" id="save-toast"></div>
+
 </body>
 </html>
